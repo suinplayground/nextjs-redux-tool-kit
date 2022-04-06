@@ -35,10 +35,124 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 ## Tutorial History
 
-From https://redux-toolkit.js.org/introduction/getting-started
+- [Tutorial](https://redux-toolkit.js.org/introduction/getting-started)
 
 Install Redux Toolkit:
 
 ```shell
-yarn add @reduxjs/toolkit
+yarn add @reduxjs/toolkit react-redux
+```
+
+### Setting up your store and API service
+
+- [Tutorial](https://redux-toolkit.js.org/tutorials/rtk-query)
+
+Create an API service:
+
+```typescript
+// services/pokemons.ts
+// Need to use the React-specific entry point to import createApi
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+// import { Pokemon } from './types'
+type Pokemon = any;
+
+// Define a service using a base URL and expected endpoints
+export const pokemonApi = createApi({
+    reducerPath: "pokemonApi",
+    baseQuery: fetchBaseQuery({ baseUrl: "https://pokeapi.co/api/v2/" }),
+    endpoints: (builder) => ({
+        getPokemonByName: builder.query<Pokemon, string>({
+            query: (name) => `pokemon/${name}`,
+        }),
+    }),
+});
+
+// Export hooks for usage in functional components, which are
+// auto-generated based on the defined endpoints
+export const { useGetPokemonByNameQuery } = pokemonApi;
+```
+
+Add the service to your store:
+
+```typescript
+// store.ts
+import { configureStore } from "@reduxjs/toolkit";
+// Or from '@reduxjs/toolkit/query/react'
+import { setupListeners } from "@reduxjs/toolkit/query";
+import { pokemonApi } from "./services/pokemon";
+
+export const store = configureStore({
+    reducer: {
+        // Add the generated reducer as a specific top-level slice
+        [pokemonApi.reducerPath]: pokemonApi.reducer,
+    },
+    // Adding the api middleware enables caching, invalidation, polling,
+    // and other useful features of `rtk-query`.
+    middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware().concat(pokemonApi.middleware),
+});
+
+// optional, but required for refetchOnFocus/refetchOnReconnect behaviors
+// see `setupListeners` docs - takes an optional callback as the 2nd arg for customization
+setupListeners(store.dispatch);
+```
+
+Wrap your application with the `Provider`:
+
+```tsx
+// pages/_app.tsx
+import type { AppProps } from "next/app";
+import { Provider } from "react-redux";
+import { store } from "../store";
+import "../styles/globals.css";
+
+function MyApp({ Component, pageProps }: AppProps) {
+  return (
+    <Provider store={store}>
+      <Component {...pageProps} />
+    </Provider>
+  );
+}
+
+export default MyApp;
+```
+
+Use the query in a component:
+
+```tsx
+// pages/pokemon.ts
+import { NextPage } from "next";
+import { useGetPokemonByNameQuery } from "../services/pokemon";
+
+const Pokemon: NextPage = (props) => {
+    // Using a query hook automatically fetches data and returns query values
+    const { data, error, isLoading } = useGetPokemonByNameQuery("bulbasaur");
+    // Individual hooks are also accessible under the generated endpoints:
+    // const { data, error, isLoading } = pokemonApi.endpoints.getPokemonByName.useQuery('bulbasaur')
+
+    return (
+        <div>
+            <h1>Pokemon</h1>
+            <p>
+                <a href="https://redux-toolkit.js.org/tutorials/rtk-query">
+                    see the tutorial
+                </a>
+            </p>
+            <div>
+                {error ? (
+                    <>Oh no, there was an error</>
+                ) : isLoading ? (
+                    <>Loading...</>
+                ) : data ? (
+                    <>
+                        <h3>{data.species.name}</h3>
+                        <img src={data.sprites.front_shiny} alt={data.species.name} />
+                    </>
+                ) : null}
+            </div>
+        </div>
+    );
+};
+
+export default Pokemon;
 ```
