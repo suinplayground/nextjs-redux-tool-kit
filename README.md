@@ -161,8 +161,107 @@ export default Pokemon;
 
 - [Documentation](https://redux-toolkit.js.org/rtk-query/usage/code-generation)
 
-Install @rtk-query/codegen-openapi:
+Install @rtk-query/codegen-openapi and its dependencies:
 
 ```shell
-yarn add -D @rtk-query/codegen-openapi
+yarn add -D @rtk-query/codegen-openapi esbuild esbuild-runner
+```
+
+Create an empty api using `createApi` like:
+
+```typescript
+// store/emptyApi.ts
+// Or from '@reduxjs/toolkit/query' if not using the auto-generated hooks
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+
+// initialize an empty api service that we'll inject endpoints into later as needed
+export const emptySplitApi = createApi({
+    baseQuery: fetchBaseQuery({ baseUrl: "https://petstore.swagger.io/v2/" }),
+    endpoints: () => ({}),
+});
+```
+
+Generate a config file (json, js or ts) with contents like:
+
+```typescript
+// openapi-config.ts
+import type { ConfigFile } from "@rtk-query/codegen-openapi";
+
+// https://redux-toolkit.js.org/rtk-query/usage/code-generation#simple-usage
+const config: ConfigFile = {
+    schemaFile: "https://petstore3.swagger.io/api/v3/openapi.json",
+    apiFile: "./store/emptyApi.ts",
+    apiImport: "emptySplitApi",
+    outputFile: "./store/petApi.ts",
+    exportName: "petApi",
+    hooks: true,
+};
+
+export default config;
+```
+
+and then call the code generator:
+
+```shell
+npx @rtk-query/codegen-openapi openapi-config.ts
+```
+
+This generates a new api file in the `store` directory.
+
+Wrap your application with the `Provider`:
+
+```tsx
+// pages/_app.tsx
+import type { AppProps } from "next/app";
+import { ApiProvider } from "@reduxjs/toolkit/query/react";
+import { petApi } from "../store/petApi";
+import "../styles/globals.css";
+
+function MyApp({ Component, pageProps, router }: AppProps) {
+  return (
+    <ApiProvider api={petApi}>
+      <Component {...pageProps} />
+    </ApiProvider>
+  );
+}
+
+export default MyApp;
+```
+
+Use the query in a component:
+
+```tsx
+// pages/pet.ts
+import { NextPage } from "next";
+import { useFindPetsByStatusQuery } from "../store/petApi";
+
+const Pet: NextPage = (props) => {
+    const { data, error, isLoading } = useFindPetsByStatusQuery({
+        status: "available",
+    });
+
+    return (
+        <div>
+            <h1>Petstore</h1>
+            <p>
+                <a href="https://redux-toolkit.js.org/rtk-query/usage/code-generation">
+                    see the tutorial
+                </a>
+            </p>
+            <div>
+                {error ? (
+                    <>Oh no, there was an error</>
+                ) : isLoading ? (
+                    <>Loading...</>
+                ) : data ? (
+                    <>
+                        <pre>{JSON.stringify(data, null, 2)}</pre>
+                    </>
+                ) : null}
+            </div>
+        </div>
+    );
+};
+
+export default Pet;
 ```
