@@ -16,6 +16,7 @@
     "react-redux": "^7.2.8"
   },
   "devDependencies": {
+    "@rtk-query/codegen-openapi": "^1.0.0-alpha.1",
     "@types/node": "17.0.23",
     "@types/react": "17.0.43",
     "@types/react-dom": "17.0.14",

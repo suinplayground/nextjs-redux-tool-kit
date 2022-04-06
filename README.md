@@ -156,3 +156,13 @@ const Pokemon: NextPage = (props) => {
 
 export default Pokemon;
 ```
+
+### Code Generation + OpenAPI
+
+- [Documentation](https://redux-toolkit.js.org/rtk-query/usage/code-generation)
+
+Install @rtk-query/codegen-openapi:
+
+```shell
+yarn add -D @rtk-query/codegen-openapi
+```
