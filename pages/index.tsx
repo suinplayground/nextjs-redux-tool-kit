@@ -33,23 +33,12 @@ const Home: NextPage = () => {
             </a>
           </Link>
 
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className={styles.card}
-          >
-            <h2>Examples &rarr;</h2>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h2>Deploy &rarr;</h2>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+          <Link href="/esa">
+            <a className={styles.card}>
+              <h2>esa.io &rarr;</h2>
+              <p>OpenAPI + Code Generation + Access Token</p>
+            </a>
+          </Link>
         </div>
       </main>
 
